@@ -1,8 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const Database = require('better-sqlite3');
-const path = require('path');
+const mongoose = require('mongoose');
 
 // Load environment variables
 dotenv.config();
@@ -12,9 +11,39 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Connect to SQLite database
-const db = new Database(path.join(__dirname, '../db.sqlite'));
-app.locals.db = db;
+// MongoDB Atlas connection
+const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/ai_ecommerce';
+mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB connection error:', err));
+
+// Define schemas and models
+const Order = mongoose.model('Order', new mongoose.Schema({
+  order_id: { type: String, required: true, unique: true },
+  status: String,
+  user_id: String,
+}, { collection: 'orders' }));
+
+const Shipping = mongoose.model('Shipping', new mongoose.Schema({
+  tracking_id: { type: String, required: true, unique: true },
+  status: String,
+  order_id: String,
+}, { collection: 'shipping' }));
+
+const Product = mongoose.model('Product', new mongoose.Schema({
+  product_name: { type: String, required: true, unique: true },
+  available: Boolean,
+  stock: Number,
+}, { collection: 'products' }));
+
+const Log = mongoose.model('Log', new mongoose.Schema({
+  user_id: String,
+  query: String,
+  response: String,
+  timestamp: String,
+}, { collection: 'logs' }));
+
+app.locals.models = { Order, Shipping, Product, Log };
 
 // Import and use routes
 const orderRoutes = require('./routes/order');
