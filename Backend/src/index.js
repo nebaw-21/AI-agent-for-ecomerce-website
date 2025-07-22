@@ -17,34 +17,11 @@ mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// Define schemas and models
-const Order = mongoose.model('Order', new mongoose.Schema({
-  order_id: { type: String, required: true, unique: true },
-  status: String,
-  user_id: String,
-  product_name: String,
-}, { collection: 'orders' }));
-
-const Shipping = mongoose.model('Shipping', new mongoose.Schema({
-  tracking_id: { type: String, required: true, unique: true },
-  status: String,
-  order_id: String,
-}, { collection: 'shipping' }));
-
-const Product = mongoose.model('Product', new mongoose.Schema({
-  product_name: { type: String, required: true, unique: true },
-  available: Boolean,
-  stock: Number,
-}, { collection: 'products' }));
-
-const Log = mongoose.model('Log', new mongoose.Schema({
-  user_id: String,
-  query: String,
-  response: String,
-  timestamp: String,
-}, { collection: 'logs' }));
-
-app.locals.models = { Order, Shipping, Product, Log };
+// Import models (registers them with mongoose)
+require('./models/Order');
+require('./models/Shipping');
+require('./models/Product');
+require('./models/Log');
 
 // Import and use routes
 const orderRoutes = require('./routes/order');
@@ -65,4 +42,4 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-}); 
+});
