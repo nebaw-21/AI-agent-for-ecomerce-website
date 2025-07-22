@@ -17,4 +17,31 @@ router.get('/:order_id', async (req, res) => {
   }
 });
 
+// POST /order
+router.post('/', async (req, res) => {
+  const { Order } = req.app.locals.models;
+  const { product_name, user_id } = req.body;
+  if (!product_name || !user_id) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  try {
+    const order_id = `ORD-${Date.now()}`;
+    const order = await Order.create({ order_id, status: 'Placed', user_id, product_name });
+    res.json({ success: true, order });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET /order
+router.get('/', async (req, res) => {
+  const { Order } = req.app.locals.models;
+  try {
+    const orders = await Order.find({}).sort({ _id: -1 });
+    res.json({ orders });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router; 

@@ -17,4 +17,15 @@ router.get('/name/:product_name', async (req, res) => {
   }
 });
 
+// GET /product/
+router.get('/', async (req, res) => {
+  const { Product } = req.app.locals.models;
+  try {
+    const products = await Product.find({});
+    res.json({ products });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router; 

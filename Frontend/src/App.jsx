@@ -4,9 +4,12 @@ import { addMessage, setInput } from './store/slices/chatSlice';
 import { setProduct, clearProduct } from './store/slices/productSlice';
 import { setLogs, showHistoryPanel, hideHistoryPanel } from './store/slices/logsSlice';
 import Chat from './components/Chat';
-import VoiceInput from './components/VoiceInput';
 import ProductCard from './components/ProductCard';
 import HistoryPanel from './components/HistoryPanel';
+import ProductDisplay from './components/ProductDisplay';
+import { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import OrderPage from './components/OrderPage';
 
 function App() {
   const dispatch = useDispatch();
@@ -15,6 +18,8 @@ function App() {
   const product = useSelector(state => state.product.product);
   const logs = useSelector(state => state.logs.logs);
   const showHistory = useSelector(state => state.logs.showHistory);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [listening, setListening] = useState(false);
 
   const API_BASE = 'http://localhost:5000';
 
@@ -41,8 +46,24 @@ function App() {
     }
   };
 
-  const handleVoice = (transcript) => {
-    sendMessage(transcript);
+  // Voice input logic moved here for integration with Chat input
+  const handleVoice = () => {
+    if (!('webkitSpeechRecognition' in window)) {
+      alert('Web Speech API not supported in this browser.');
+      return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.onresult = (event) => {
+      const text = event.results[0][0].transcript;
+      dispatch(setInput(text));
+      sendMessage(text);
+    };
+    recognition.onend = () => setListening(false);
+    recognition.start();
+    setListening(true);
   };
 
   const fetchLogs = async () => {
@@ -56,31 +77,63 @@ function App() {
   };
 
   return (
-    <div className="max-w-lg mx-auto bg-gray-900 rounded-2xl shadow-lg p-8 relative mt-8">
-      <h1 className="text-2xl font-bold text-center mb-6 text-white">AI E-Commerce Assistant</h1>
-      <Chat messages={messages} />
-      <form
-        onSubmit={e => { e.preventDefault(); sendMessage(input); }}
-        className="flex gap-2 mb-4"
-      >
-        <input
-          value={input}
-          onChange={e => dispatch(setInput(e.target.value))}
-          placeholder="Type your message..."
-          className="flex-1 p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring focus:border-blue-400"
-        />
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Send</button>
-      </form>
-      <VoiceInput onTranscript={handleVoice} />
-      {product && <ProductCard product={product} />}
-      <button
-        onClick={fetchLogs}
-        className="mt-4 bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
-      >
-        View Chat History
-      </button>
-      {showHistory && <HistoryPanel logs={logs} onClose={() => dispatch(hideHistoryPanel())} />}
-    </div>
+    <Router>
+      <div className="min-h-screen bg-gray-100">
+        {/* Header with navigation */}
+        <header className="bg-white shadow flex items-center justify-between px-8 py-4 mb-8">
+          <h1 className="text-2xl font-bold text-blue-700">AI E-Commerce Assistant</h1>
+          <nav className="flex gap-6">
+            <a href="/" className="text-gray-700 hover:text-blue-600 font-medium">Products</a>
+            <a href="/order" className="text-gray-700 hover:text-blue-600 font-medium">Orders</a>
+          </nav>
+        </header>
+        <main className="max-w-7xl mx-auto px-4">
+          <Routes>
+            <Route path="/" element={<ProductDisplay />} />
+            <Route path="/order" element={<OrderPage />} />
+          </Routes>
+        </main>
+        {/* Floating Chatbot Button */}
+        <button
+          className="fixed bottom-8 right-8 z-50 bg-blue-600 text-white rounded-full w-16 h-16 flex items-center justify-center shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          onClick={() => setChatOpen(true)}
+          style={{ fontSize: '2rem' }}
+          aria-label="Open Chatbot"
+        >
+          💬
+        </button>
+        {/* Chat Modal */}
+        {chatOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-gray-900 rounded-2xl shadow-lg p-8 relative w-full max-w-lg mx-auto">
+              <button
+                className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl"
+                onClick={() => setChatOpen(false)}
+                aria-label="Close Chatbot"
+              >
+                ×
+              </button>
+              <Chat
+                messages={messages}
+                input={input}
+                onInputChange={val => dispatch(setInput(val))}
+                onSend={() => sendMessage(input)}
+                onVoice={handleVoice}
+                listening={listening}
+              />
+              {product && <ProductCard product={product} />}
+              <button
+                onClick={fetchLogs}
+                className="mt-4 bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
+              >
+                View Chat History
+              </button>
+              {showHistory && <HistoryPanel logs={logs} onClose={() => dispatch(hideHistoryPanel())} />}
+            </div>
+          </div>
+        )}
+      </div>
+    </Router>
   );
 }
 

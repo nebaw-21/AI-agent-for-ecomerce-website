@@ -22,6 +22,7 @@ const Order = mongoose.model('Order', new mongoose.Schema({
   order_id: { type: String, required: true, unique: true },
   status: String,
   user_id: String,
+  product_name: String,
 }, { collection: 'orders' }));
 
 const Shipping = mongoose.model('Shipping', new mongoose.Schema({
