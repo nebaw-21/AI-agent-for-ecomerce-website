@@ -1,5 +1,6 @@
+const Shipping = require('../models/Shipping');
+
 exports.createShipping = async (req, res) => {
-  const { Shipping } = req.app.locals.models;
   const { tracking_id, status, order_id } = req.body;
   if (!tracking_id || !order_id) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -13,7 +14,6 @@ exports.createShipping = async (req, res) => {
 };
 
 exports.getShippingByOrderId = async (req, res) => {
-  const { Shipping } = req.app.locals.models;
   const { order_id } = req.params;
   try {
     const shipping = await Shipping.findOne({ order_id });
