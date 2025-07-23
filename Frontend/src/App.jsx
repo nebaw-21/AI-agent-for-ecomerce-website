@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { addMessage, setInput } from './store/slices/chatSlice';
+import { addMessage, setInput, sendChatMessage } from './store/slices/chatSlice';
 import { setProduct, clearProduct } from './store/slices/productSlice';
 import { setLogs, showHistoryPanel, hideHistoryPanel } from './store/slices/logsSlice';
 import Chat from './components/Chat';
@@ -25,8 +25,6 @@ function App() {
 
   const sendMessage = async (text) => {
     if (!text.trim()) return;
-    dispatch(addMessage({ sender: 'user', text }));
-    dispatch(setInput(''));
     if (text.toLowerCase().startsWith('check product')) {
       const name = text.split('check product')[1]?.trim();
       if (name) {
@@ -42,7 +40,7 @@ function App() {
       }
     } else {
       dispatch(clearProduct());
-      dispatch(addMessage({ sender: 'assistant', text: 'Sorry, I can only check product availability in this demo.' }));
+      dispatch(sendChatMessage('USER1', text));
     }
   };
 

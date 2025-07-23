@@ -3,7 +3,7 @@ const axios = require('axios');
 exports.handleChat = async (req, res) => {
   const { user_id, message } = req.body;
   try {
-    const langchainRes = await axios.post('http://localhost:5000/chat', {
+    const langchainRes = await axios.post('http://0.0.0.0:8000/chat', {
       user_id,
       message,
     });

@@ -5,11 +5,12 @@ from agent_builder import agent
 app = FastAPI()
 
 class ChatInput(BaseModel):
-    user_id: str
     message: str
 
 @app.post("/chat")
 def chat(chat: ChatInput):
+    if not chat.message or not chat.message.strip():
+        return {"response": "Please enter a message."}
     result = agent.run(chat.message)
     return {"response": result}
 

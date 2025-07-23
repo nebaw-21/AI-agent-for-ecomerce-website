@@ -86,3 +86,26 @@ exports.deleteOrderByNameFuzzy = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+exports.orderByName = async (req, res) => {
+  const { name } = req.body;
+  if (!name) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  try {
+    const regex = new RegExp(escapeRegExp(name), 'i');
+    const product = await Product.findOne({ product_name: { $regex: regex } });
+    if (!product) {
+      return res.status(404).json({ error: 'No product found matching criteria' });
+    }
+    const order_id = 'ORD-' + Date.now();
+    const order = await Order.create({
+      order_id,
+      status: 'Pending',
+      product_name: product.product_name
+    });
+    res.json({ success: true, order });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+};

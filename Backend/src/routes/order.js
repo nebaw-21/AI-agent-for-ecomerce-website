@@ -17,4 +17,7 @@ router.post('/fuzzy', orderController.orderByNameAndPriceRange);
 // DELETE /order/delete-by-name/:name
 router.delete('/delete-by-name/:name', orderController.deleteOrderByNameFuzzy);
 
+// POST /order/by-name
+router.post('/by-name', orderController.orderByName);
+
 module.exports = router;

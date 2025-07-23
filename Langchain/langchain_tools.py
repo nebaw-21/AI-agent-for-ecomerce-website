@@ -1,7 +1,8 @@
 from langchain.agents import tool
 import requests
+import json
 
-NODE_BACKEND_URL = "http://localhost:3000"
+NODE_BACKEND_URL = "http://localhost:5000"
 
 @tool
 def get_order_status(order_id: str) -> str:
@@ -13,19 +14,12 @@ def get_order_status(order_id: str) -> str:
     order = data.get("order")
     if not order:
         return "Order not found."
-    return f"Order Status: {order.get('status', 'Unknown')}"
+    status = order.get('status', 'Unknown')
+    if not status:
+        return "Order status unavailable."
+    return f"Order Status: {status}"
 
-@tool
-def get_shipping_status(order_id: str) -> str:
-    """Get shipping status using an order ID."""
-    res = requests.get(f"{NODE_BACKEND_URL}/shipping/{order_id}")
-    if res.status_code != 200:
-        return "Shipping info not found."
-    data = res.json()
-    shipping = data.get("shipping")
-    if not shipping:
-        return "Shipping info not found."
-    return f"Shipping Status: {shipping.get('status', 'Unknown')}"
+
 
 @tool
 def get_product_availability(product_name: str) -> str:
@@ -39,15 +33,16 @@ def get_product_availability(product_name: str) -> str:
     return f"{product_name}: {'In Stock ✅' if available else 'Out of Stock ❌'} (Stock: {stock})"
 
 @tool
-def create_order(product_name: str, user_id: str, image_url: str = None) -> str:
+def create_order(product_name: str) -> str:
     """Create a new order."""
-    payload = {"product_name": product_name, "user_id": user_id}
-    if image_url:
-        payload["image_url"] = image_url
+    payload = {"product_name": product_name}
     res = requests.post(f"{NODE_BACKEND_URL}/order", json=payload)
     if res.status_code != 200:
         return "Failed to create order."
-    return f"Order created: {res.json().get('order', {})}"
+    order = res.json().get('order', {})
+    if not order:
+        return "Order creation failed."
+    return f"Order created: {order}"
 
 @tool
 def get_all_orders() -> str:
@@ -55,20 +50,26 @@ def get_all_orders() -> str:
     res = requests.get(f"{NODE_BACKEND_URL}/order")
     if res.status_code != 200:
         return "Failed to fetch orders."
-    return str(res.json().get('orders', []))
+    orders = res.json().get('orders', [])
+    if not orders:
+        return "No orders found."
+    # Format orders as readable text
+    return "\n".join(
+        f"Order ID: {o.get('order_id', '')}, Product: {o.get('product_name', '')}, Status: {o.get('status', '')}"
+        for o in orders
+    )
 
 @tool
-def order_by_name_and_price_range(name: str, user_id: str, minPrice: float = None, maxPrice: float = None) -> str:
-    """Order product by name and price range."""
-    payload = {"name": name, "user_id": user_id}
-    if minPrice is not None:
-        payload["minPrice"] = minPrice
-    if maxPrice is not None:
-        payload["maxPrice"] = maxPrice
+def order_by_name(name: str) -> str:
+    """Order product by name."""
+    payload = {"name": name}
     res = requests.post(f"{NODE_BACKEND_URL}/order/fuzzy", json=payload)
     if res.status_code != 200:
         return "No product found matching criteria."
-    return f"Order created: {res.json().get('order', {})}"
+    order = res.json().get('order', {})
+    if not order:
+        return "No product found matching criteria."
+    return f"Order created: {order}"
 
 @tool
 def delete_order_by_name_fuzzy(name: str) -> str:
@@ -76,16 +77,12 @@ def delete_order_by_name_fuzzy(name: str) -> str:
     res = requests.delete(f"{NODE_BACKEND_URL}/order/delete-by-name/{name}")
     if res.status_code != 200:
         return "Failed to delete orders."
-    return f"Deleted orders: {res.json().get('deletedCount', 0)}"
+    deleted = res.json().get('deletedCount', 0)
+    if not deleted:
+        return "No orders deleted."
+    return f"Deleted orders: {deleted}"
 
-@tool
-def create_shipping(tracking_id: str, status: str, order_id: str) -> str:
-    """Create a new shipping entry."""
-    payload = {"tracking_id": tracking_id, "status": status, "order_id": order_id}
-    res = requests.post(f"{NODE_BACKEND_URL}/shipping", json=payload)
-    if res.status_code != 200:
-        return "Failed to create shipping."
-    return f"Shipping created: {res.json().get('shipping', {})}"
+
 
 @tool
 def get_all_products() -> str:
@@ -93,21 +90,15 @@ def get_all_products() -> str:
     res = requests.get(f"{NODE_BACKEND_URL}/product/")
     if res.status_code != 200:
         return "Failed to fetch products."
-    return str(res.json().get('products', []))
+    products = res.json().get('products', [])
+    if not products:
+        return "No products found."
+    # Format products as readable text
+    return "\n".join(
+        f"Product: {p.get('product_name', '')}, Price: {p.get('price', 'N/A')}, Stock: {p.get('stock', 0)}, Available: {'Yes' if p.get('available', False) else 'No'}"
+        for p in products
+    )
 
-@tool
-def create_log(user_id: str, query: str, response: str) -> str:
-    """Create a log entry."""
-    payload = {"user_id": user_id, "query": query, "response": response}
-    res = requests.post(f"{NODE_BACKEND_URL}/log", json=payload)
-    if res.status_code != 200:
-        return "Failed to create log."
-    return "Log created."
 
-@tool
-def get_logs_by_user(user_id: str) -> str:
-    """Get logs by user ID."""
-    res = requests.get(f"{NODE_BACKEND_URL}/log/{user_id}")
-    if res.status_code != 200:
-        return "Failed to fetch logs."
-    return str(res.json().get('logs', []))
+
+
