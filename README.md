@@ -51,32 +51,39 @@ User: Order a laptop
 
 ## 🏗️ Architecture Overview
 
-```mermaid
-flowchart TD
-    subgraph Frontend [React App]
-        A1[User UI: Chat, Products, Orders, Voice]
-        A2[Redux Store]
-    end
-    subgraph Node.js Backend
-        B1[Express API]
-        B2[MongoDB (Mongoose)]
-    end
-    subgraph Python AI Agent
-        C1[FastAPI]
-        C2[LangChain Agent]
-        C3[Google Gemini]
-    end
-    A1 -- REST /chat, /product, /order --> B1
-    B1 -- REST /chat --> C1
-    C1 -- Tool Calls (REST) --> B1
-    B1 -- DB Ops --> B2
-    C2 -- Function Calling --> C1
-    C2 -- LLM API --> C3
-```
+The system is composed of three main layers:
 
-- **Frontend**: User interacts via chat, product/order UIs, and voice. Sends requests to Node backend.
-- **Node.js Backend**: Handles product/order/shipping/log APIs, persists data in MongoDB, and proxies chat to Python agent.
-- **Python AI Agent**: Receives chat, uses Gemini for reasoning, and calls backend APIs as tools to fulfill requests.
+---
+
+**1. Frontend (React + Redux + TailwindCSS)**
+- User interacts via chat, product/order UIs, and voice input.
+- Sends REST API requests to the Node.js backend.
+
+**2. Backend (Node.js + Express + MongoDB)**
+- Handles all product, order, shipping, and log APIs.
+- Persists data in MongoDB.
+- Proxies chat requests to the Python AI agent.
+
+**3. Python AI Agent (FastAPI + LangChain + Gemini)**
+- Receives chat requests from the backend.
+- Uses LangChain with Gemini for reasoning and function calling.
+- Calls backend APIs as tools to fulfill user requests (e.g., place order, get products).
+
+---
+
+**Data & Request Flow:**
+
+1. **User** interacts with the React app (chat, product/order actions, voice input).
+2. **Frontend** sends REST API requests to the Node.js backend.
+3. **Backend** handles business logic, database operations, and forwards chat to the Python AI agent.
+4. **Python AI Agent** uses Gemini to understand the request, may call backend APIs as tools, and returns a response.
+5. **Backend** returns the AI response to the frontend, which displays it to the user.
+
+---
+
+**Component Diagram:**
+
+Frontend (React) ⇄ Backend (Node.js/Express) ⇄ Python AI Agent (FastAPI/LangChain/Gemini)
 
 ---
 
