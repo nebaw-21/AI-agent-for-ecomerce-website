@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from langchain.agents import initialize_agent
-from langchain.chat_models import ChatGoogleGenerativeAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents.agent_types import AgentType
 from langchain.memory import ConversationBufferMemory
 import langchain_tools
