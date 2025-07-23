@@ -28,11 +28,13 @@ const orderRoutes = require('./routes/order');
 const shippingRoutes = require('./routes/shipping');
 const productRoutes = require('./routes/product');
 const logRoutes = require('./routes/log');
+const chatRoutes = require('./routes/chat');
 
 app.use('/order', orderRoutes);
 app.use('/shipping', shippingRoutes);
 app.use('/product', productRoutes);
 app.use('/log', logRoutes);
+app.use('/chat', chatRoutes);
 
 // Health check
 app.get('/', (req, res) => {
